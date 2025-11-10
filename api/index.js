@@ -62,14 +62,28 @@ const Issue = mongoose.model('Issue', issueSchema);
 const upload = multer();
 
 // === TOÀN BỘ API CỦA BẠN (giữ nguyên) ===
-app.get('/api/timestamp/:date_string?', (req, res) => {
-  let dateString = req.params.date_string;
-  let date = dateString ? new Date(dateString) : new Date();
-  if (date.toString() === 'Invalid Date') {
-    res.json({ error: 'Invalid Date' });
+app.get('/api/:date?', (req, res) => {
+  let input = req.params.date;
+
+  let date;
+  if (!input) {
+    date = new Date();
+  } else if (/^\d+$/.test(input)) {
+    // Nếu là Unix timestamp (chỉ chứa số)
+    date = new Date(parseInt(input));
   } else {
-    res.json({ unix: date.getTime(), utc: date.toUTCString() });
+    // Nếu là chuỗi ngày
+    date = new Date(input);
   }
+
+  if (isNaN(date.getTime())) {
+    return res.json({ error: "Invalid Date" });
+  }
+
+  res.json({
+    unix: date.getTime(),
+    utc: date.toUTCString()
+  });
 });
 
 app.get('/api/whoami', (req, res) => {
