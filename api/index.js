@@ -60,7 +60,13 @@ const issueSchema = new mongoose.Schema({
 const Issue = mongoose.model('Issue', issueSchema);
 
 const upload = multer();
-
+app.get('/api/whoami', (req, res) => {
+  res.json({
+    ipaddress: req.headers['x-forwarded-for']?.split(',')[0] || req.ip,
+    language: req.headers['accept-language'],
+    software: req.headers['user-agent']
+  });
+});
 // === TOÀN BỘ API CỦA BẠN (giữ nguyên) ===
 app.get('/api/:date?', (req, res) => {
   let input = req.params.date;
@@ -86,13 +92,7 @@ app.get('/api/:date?', (req, res) => {
   });
 });
 
-app.get('/api/whoami', (req, res) => {
-  res.json({
-    ipaddress: req.headers['x-forwarded-for']?.split(',')[0] || req.ip,
-    language: req.headers['accept-language'],
-    software: req.headers['user-agent']
-  });
-});
+
 
 // URL SHORTENER
 let shortUrlCounter = 1;
