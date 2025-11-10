@@ -60,6 +60,24 @@ const issueSchema = new mongoose.Schema({
 const Issue = mongoose.model('Issue', issueSchema);
 
 const upload = multer();
+let shortUrlCounter = 1;
+app.post('/api/shorturl', async (req, res) => {
+  const { url } = req.body;
+  if (!/^https?:\/\//.test(url)) return res.json({ error: 'invalid url' });
+
+  const existing = await Url.findOne({ original_url: url });
+  if (existing) return res.json({ original_url: url, short_url: existing.short_url });
+
+  const newUrl = new Url({ original_url: url, short_url: shortUrlCounter });
+  await newUrl.save();
+  res.json({ original_url: url, short_url: shortUrlCounter++ });
+});
+
+app.get('/api/shorturl/:short', async (req, res) => {
+  const found = await Url.findOne({ short_url: +req.params.short });
+  if (found) res.redirect(found.original_url);
+  else res.json({ error: 'No short URL found' });
+});
 app.get('/api/whoami', (req, res) => {
   res.json({
     ipaddress: req.headers['x-forwarded-for']?.split(',')[0] || req.ip,
@@ -95,24 +113,7 @@ app.get('/api/:date?', (req, res) => {
 
 
 // URL SHORTENER
-let shortUrlCounter = 1;
-app.post('/api/shorturl', async (req, res) => {
-  const { url } = req.body;
-  if (!/^https?:\/\//.test(url)) return res.json({ error: 'invalid url' });
 
-  const existing = await Url.findOne({ original_url: url });
-  if (existing) return res.json({ original_url: url, short_url: existing.short_url });
-
-  const newUrl = new Url({ original_url: url, short_url: shortUrlCounter });
-  await newUrl.save();
-  res.json({ original_url: url, short_url: shortUrlCounter++ });
-});
-
-app.get('/api/shorturl/:short', async (req, res) => {
-  const found = await Url.findOne({ short_url: +req.params.short });
-  if (found) res.redirect(found.original_url);
-  else res.json({ error: 'No short URL found' });
-});
 
 // EXERCISE TRACKER
 app.post('/api/users', async (req, res) => {
